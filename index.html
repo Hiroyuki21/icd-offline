@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pencarian Kode ICD</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container-fluid py-4 px-md-5">
+    <div class="card shadow main-card">
+      <div class="card-header bg-primary text-white py-3">
+        <h2 class="text-center mb-0">
+          <i class="fas fa-search me-2"></i>Pencarian Kode ICD
+        </h2>
+      </div>
+      
+      <div class="card-body">
+        <!-- Tools Section -->
+        <div class="tools-container mb-4">
+          <div class="row justify-content-center">
+            <div class="col-md-10">
+              <div class="btn-toolbar justify-content-center flex-wrap">
+                <button class="btn btn-outline-secondary m-1" id="darkModeBtn">
+                  <i class="fas fa-moon me-1"></i> Mode Gelap
+                </button>
+                <button class="btn btn-outline-warning m-1" id="resetDataBtn">
+                  <i class="fas fa-undo me-1"></i> Reset Data
+                </button>
+                <button class="btn btn-outline-primary m-1" id="exportExcelBtn">
+                  <i class="fas fa-file-excel me-1"></i> Ekspor Excel
+                </button>
+                <label class="btn btn-outline-info m-1" for="importFile">
+                  <i class="fas fa-file-import me-1"></i> Impor JSON
+                  <input accept=".json" id="importFile" type="file" style="display:none;">
+                </label>
+                <button class="btn btn-outline-success m-1" id="saveToFileBtn">
+                  <i class="fas fa-save me-1"></i> Simpan ke File
+                </button>
+                <button class="btn btn-outline-secondary m-1" id="printBtn">
+                  <i class="fas fa-print me-1"></i> Cetak
+                </button>
+                <button class="btn btn-outline-info m-1" id="csvExportBtn">
+                  <i class="fas fa-table me-1"></i> Ekspor CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Search Box -->
+        <div class="search-container mb-4">
+          <div class="row justify-content-center">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text bg-light">
+                  <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchInput" 
+                       placeholder="Cari ICD, Penyakit, atau Bahasa Lain...">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Table Section -->
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-primary">
+              <tr>
+                <th>Kode ICD</th>
+                <th>Nama ICD (Indonesia)</th>
+                <th>Nama ICD (Inggris)</th>
+                <th>Bahasa Lain</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Data will be dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-container d-flex justify-content-center align-items-center mt-4">
+          <button class="btn btn-primary me-2" id="prevBtn">
+            <i class="fas fa-chevron-left me-1"></i> Sebelumnya
+          </button>
+          <span class="px-3 py-2 bg-light rounded-3 text-secondary" id="pageInfo">
+            Halaman 1 dari 1
+          </span>
+          <button class="btn btn-primary ms-2" id="nextBtn">
+            Berikutnya <i class="fas fa-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="toast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="fas fa-check-circle me-2"></i>
+            <span id="toastMessage">Sukses!</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="editModalLabel">
+            <i class="fas fa-edit me-2"></i>Edit Data ICD
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <div class="mb-3">
+              <label for="modalKode" class="form-label">Kode ICD</label>
+              <input type="text" class="form-control" id="modalKode" disabled>
+            </div>
+            <div class="mb-3">
+              <label for="modalIndo" class="form-label">Nama ICD (Indonesia)</label>
+              <input type="text" class="form-control" id="modalIndo">
+            </div>
+            <div class="mb-3">
+              <label for="modalInggris" class="form-label">Nama ICD (Inggris)</label>
+              <input type="text" class="form-control" id="modalInggris">
+            </div>
+            <div class="mb-3">
+              <label for="modalLain" class="form-label">Bahasa Lain</label>
+              <input type="text" class="form-control" id="modalLain">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Batal
+          </button>
+          <button type="button" class="btn btn-success" id="saveModalBtn">
+            <i class="fas fa-save me-1"></i>Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JavaScript -->
+  <script src="js/script.js"></script>
+</body>
+</html>
